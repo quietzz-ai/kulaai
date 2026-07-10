@@ -1,6 +1,6 @@
 # KULAAI：一站式 AI 聚合平台
 
-官网地址： https://11ai.xyz
+官网地址： [11ai.xyx](https://11ai.xyz/)
 
 KULAAI 是一个国内可直接访问的 AI 聚合平台，集成 ChatGPT、Claude、Gemini、Grok、DeepSeek 等主流大模型，并提供 AI 绘图、视频生成、论文写作等多功能模块，无需多平台切换即可使用当前最前沿的 AI 能力。目前支持基础功能免费体验 + 付费套餐升级的模式。
 
