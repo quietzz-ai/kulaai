@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KULAAI - 一站式大模型聚合平台</title>
+
+    <!-- ==================== 引入Tailwind CSS CDN框架 ==================== -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+
+    <!-- ==================== Tailwind自定义颜色配置 ==================== -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'deep-blue': '#0F3460',
+                        'deep-blue-light': '#1a4a7a',
+                        'deep-blue-dark': '#0a2353',
+                        'bright-orange': '#FF7D00',
+                        'bright-orange-light': '#ffaa55',
+                        'bright-orange-pale': '#ffd4aa',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- ==================== CSS样式区 ==================== -->
+    <style>
+        /* ========== 全局基础样式 ========== */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0F3460;
+            font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ========== 左右大面积淡色几何装饰 ========== */
+        .side-decoration-left {
+            position: fixed;
+            top: -10%;
+            left: -5%;
+            width: 35vw;
+            height: 120vh;
+            background: radial-gradient(ellipse at 30% 50%, rgba(30, 80, 160, 0.08) 0%, rgba(15, 52, 96, 0.03) 60%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .side-decoration-right {
+            position: fixed;
+            top: -10%;
+            right: -5%;
+            width: 35vw;
+            height: 120vh;
+            background: radial-gradient(ellipse at 70% 50%, rgba(255, 140, 30, 0.07) 0%, rgba(255, 125, 0, 0.03) 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .main-content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ========== 统一圆角 ========== */
+        .rounded-standard {
+            border-radius: 14px;
+        }
+
+        /* ========== 柔和阴影 ========== */
+        .shadow-soft-deep {
+            box-shadow: 0 4px 16px rgba(10, 30, 55, 0.25), 0 8px 32px rgba(10, 30, 55, 0.15), 0 16px 48px rgba(10, 30, 55, 0.08);
+        }
+
+        /* ========== 导航栏样式 ========== */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            background: linear-gradient(180deg, #0F3460 0%, #0d2d55 40%, #0a2353 100%);
+            box-shadow: 0 2px 20px rgba(10, 25, 50, 0.4);
+            /* 初始隐藏，动画自动播放 */
+            opacity: 0;
+            transform: translateY(-8px);
+            /* 动画名称：淡入下滑，持续0.35s，缓出，停留在结束状态 */
+            animation: 淡入下滑 0.35s ease-out forwards;
+        }
+        /* 导航栏底部亮橙色宽幅装饰线 */
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #FF7D00;
+            transform: scaleX(0);
+            transform-origin: center;
+            /* 分割线动画自动播放，延迟0.35s（等待导航栏出现） */
+            animation: 分割线延伸 0.55s ease-out 0.35s forwards;
+        }
+
+        .navbar-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .brand-logo {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+            text-decoration: none;
+            user-select: none;
+        }
+        .brand-logo:hover {
+            color: #FF7D00;
+            transform: scale(1.04);
+        }
+
+        .nav-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            font-size: 14px;
+            color: #c8ddf8;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            cursor: default;
+            position: relative;
+            transition: color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+        }
+        .nav-tag::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: #FF7D00;
+            border-radius: 2px;
+            transition: width 0.3s ease-out;
+        }
+        .nav-tag:hover {
+            color: #ffffff;
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.10);
+        }
+        .nav-tag:hover::after {
+            width: 100%;
+        }
+
+        /* ========== 亮橙色大块按钮样式 ========== */
+        .btn-orange-large {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #FF7D00 0%, #ff9a3c 25%, #FF7D00 50%, #ff9a3c 75%, #FF7D00 100%);
+            background-size: 300% 100%;
+            animation: 光带缓慢流动 2.8s linear infinite;
+            box-shadow: 0 4px 18px rgba(255, 125, 0, 0.35), 0 8px 30px rgba(255, 125, 0, 0.18);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, animation-duration 0.3s ease-out;
+            position: relative;
+            user-select: none;
+        }
+        .btn-orange-large::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 20px;
+            background: rgba(255, 125, 0, 0.0);
+            z-index: -1;
+            transition: background 0.35s ease-out, top 0.3s ease-out, left 0.3s ease-out, right 0.3s ease-out, bottom 0.3s ease-out;
+        }
+        .btn-orange-large:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 28px rgba(255, 125, 0, 0.50), 0 16px 44px rgba(255, 125, 0, 0.28);
+            animation-duration: 1.4s;
+        }
+        .btn-orange-large:hover::before {
+            background: rgba(255, 125, 0, 0.18);
+            top: -14px;
+            left: -14px;
+            right: -14px;
+            bottom: -14px;
+        }
+        .btn-orange-large:active {
+            transform: scale(1.02);
+        }
+
+        /* ========== 主视觉区域 ========== */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            min-height: 520px;
+            background: linear-gradient(170deg, #0F3460 0%, #0d2f58 30%, #0b2750 60%, #0a2353 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 24px 70px;
+            overflow: hidden;
+            /* 初始隐藏，动画自动播放，延迟0.1秒 */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: 淡入上浮 0.4s ease-out 0.1s forwards;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.015) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 60%, rgba(255, 180, 100, 0.02) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(30, 80, 160, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+        }
+        .hero-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 2px;
+            line-height: 1.3;
+            margin-bottom: 18px;
+            animation: 标题微光 2.8s ease-in-out infinite;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .hero-subtitle {
+            font-size: 18px;
+            color: #c8ddf8;
+            letter-spacing: 0.8px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+        .hero-subtitle .highlight-orange {
+            color: #FF7D00;
+            font-weight: 600;
+        }
+
+        /* ========== 功能卡片样式 ========== */
+        .feature-card {
+            position: relative;
+            background: linear-gradient(160deg, #0F3460 0%, #0d2f58 40%, #0a2353 100%);
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(10, 30, 55, 0.25), 0 8px 28px rgba(10, 30, 55, 0.12);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+            /* 初始隐藏，动画自动播放，延迟使用内联样式指定（见HTML） */
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        /* 卡片载入动画：由行内style的animation-delay控制 */
+        .feature-card.loaded {
+            animation: 淡入上浮卡片 0.4s ease-out forwards;
+        }
+        .feature-card::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 8px;
+            background: #FF7D00;
+            transition: background 0.3s ease-out, box-shadow 0.3s ease-out;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 28px rgba(10, 30, 55, 0.38), 0 18px 44px rgba(10, 30, 55, 0.20), 0 26px 56px rgba(10, 30, 55, 0.10);
+        }
+        .feature-card:hover::before {
+            background: #ff9930;
+            box-shadow: 0 0 16px rgba(255, 125, 0, 0.5);
+        }
+        .feature-card-body {
+            padding: 28px 24px 24px;
+            text-align: center;
+        }
+        .feature-icon-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: #FF7D00;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            font-size: 30px;
+            color: #ffffff;
+            transition: transform 0.3s ease-out, background 0.3s ease-out;
+        }
+        .feature-card:hover .feature-icon-wrap {
+            transform: scale(1.08) rotate(5deg);
+            background: #ff9930;
+        }
+        .feature-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .feature-card-desc {
+            font-size: 14px;
+            color: #b8cde6;
+            line-height: 1.7;
+            letter-spacing: 0.3px;
+        }
+
+        /* ========== 痛点介绍区域 ========== */
+        .pain-points-section {
+            position: relative;
+            background: #ffffff;
+            padding: 60px 24px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .pain-points-section::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -8%;
+            width: 40%;
+            height: 160%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(255, 140, 30, 0.14) 0%, rgba(255, 160, 60, 0.06) 50%, transparent 80%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .pain-points-section::after {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -8%;
+            width: 40%;
+            height: 160%;
+            background: radial-gradient(ellipse at 70% 50%, rgba(255, 140, 30, 0.14) 0%, rgba(255, 160, 60, 0.06) 50%, transparent 80%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .pain-points-content {
+            position: relative;
+            z-index: 1;
+            max-width: 750px;
+            margin: 0 auto;
+            font-size: 17px;
+            color: #333333;
+            line-height: 2.0;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        .pain-points-content .highlight-orange {
+            color: #FF7D00;
+            font-weight: 700;
+        }
+
+        /* ========== 模块分割线 ========== */
+        .section-divider {
+            width: 60%;
+            max-width: 600px;
+            height: 5px;
+            background: #FF7D00;
+            margin: 0 auto;
+            border-radius: 3px;
+            transform: scaleX(0);
+            transform-origin: center;
+            /* 分割线动画自动播放，延迟时间在HTML中通过style设置 */
+            animation: 分割线延伸 0.5s ease-out forwards;
+            animation-play-state: paused; /* 初始暂停，由JS触发或直接用延迟播放 */
+        }
+        /* 直接通过动画延迟自动播放，无需暂停 */
+        .section-divider.auto {
+            animation-play-state: running;
+        }
+
+        /* ========== 底部转化区域 ========== */
+        .cta-section {
+            position: relative;
+            width: 100%;
+            background: linear-gradient(180deg, #0F3460 0%, #0d2f58 35%, #0a2353 100%);
+            padding: 60px 24px;
+            text-align: center;
+            box-shadow: 0 -4px 20px rgba(10, 25, 50, 0.3);
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 25% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 55%),
+                        radial-gradient(circle at 70% 30%, rgba(255, 160, 60, 0.025) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+        .cta-text {
+            font-size: 20px;
+            color: #e0ecf8;
+            margin-bottom: 28px;
+            letter-spacing: 0.6px;
+            font-weight: 500;
+        }
+
+        /* ========== 页脚 ========== */
+        .footer {
+            width: 100%;
+            background: #0a2353;
+            padding: 28px 24px;
+            text-align: center;
+            border-top: 3px solid #FF7D00;
+        }
+        .footer-text {
+            font-size: 13px;
+            color: #8899bb;
+            letter-spacing: 0.5px;
+            line-height: 1.8;
+        }
+        .footer-link {
+            color: #FF7D00;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .footer-link:hover {
+            color: #ffaa55;
+        }
+
+        /* ========== 关键帧动画 ========== */
+        @keyframes 光带缓慢流动 {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+        @keyframes 标题微光 {
+            0%, 100% { opacity: 0.92; }
+            50% { opacity: 1; }
+        }
+        @keyframes 分割线延伸 {
+            0% { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+        }
+        /* 导航栏淡入下滑 */
+        @keyframes 淡入下滑 {
+            0% { opacity: 0; transform: translateY(-8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        /* 主视觉淡入上浮 */
+        @keyframes 淡入上浮 {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        /* 卡片淡入上浮 */
+        @keyframes 淡入上浮卡片 {
+            0% { opacity: 0; transform: translateY(24px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== 响应式布局 ========== */
+        @media (max-width: 768px) {
+            .navbar-inner {
+                padding: 0 16px;
+                height: 56px;
+            }
+            .brand-logo {
+                font-size: 22px;
+            }
+            .nav-tag {
+                font-size: 11px;
+                padding: 5px 10px;
+            }
+            .hero-title {
+                font-size: 30px;
+            }
+            .hero-subtitle {
+                font-size: 15px;
+            }
+            .hero-section {
+                min-height: 400px;
+                padding: 40px 16px 50px;
+            }
+            .btn-orange-large {
+                padding: 14px 32px;
+                font-size: 16px;
+                display: block;
+                width: 90%;
+                max-width: 360px;
+                margin: 0 auto;
+            }
+            .feature-card {
+                margin-bottom: 20px;
+            }
+            .feature-icon-wrap {
+                width: 52px;
+                height: 52px;
+                font-size: 26px;
+            }
+            .section-divider {
+                width: 70%;
+                height: 4px;
+            }
+            .cta-text {
+                font-size: 17px;
+            }
+            .pain-points-content {
+                font-size: 15px;
+                line-height: 1.8;
+            }
+            .side-decoration-left,
+            .side-decoration-right {
+                width: 25vw;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero-title { font-size: 26px; }
+            .hero-subtitle { font-size: 13px; }
+            .navbar-inner { height: 50px; }
+            .brand-logo { font-size: 19px; }
+            .nav-tag { font-size: 10px; padding: 4px 8px; }
+            .btn-orange-large { padding: 12px 24px; font-size: 15px; width: 95%; max-width: 300px; }
+            .feature-card-body { padding: 20px 16px 18px; }
+            .feature-card-title { font-size: 17px; }
+            .feature-card-desc { font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 左右大面积淡色装饰 -->
+    <div class="side-decoration-left" aria-hidden="true"></div>
+    <div class="side-decoration-right" aria-hidden="true"></div>
+
+    <div class="main-content-wrapper">
+
+        <!-- ==================== 1. 顶部导航栏 ==================== -->
+        <nav class="navbar" id="navbar">
+            <div class="navbar-inner">
+                <span class="brand-logo" onclick="跳转官网()" title="点击访问KULAAI官网">KULAAI</span>
+                <span class="nav-tag">聚合AI · 一站搞定</span>
+                <button class="btn-orange-large" onclick="跳转官网()" style="padding:10px 28px;font-size:15px;">
+                    进入平台
+                </button>
+            </div>
+        </nav>
+
+        <!-- ==================== 2. 首屏主视觉区 ==================== -->
+        <section class="hero-section" id="heroSection">
+            <div class="hero-content">
+                <h1 class="hero-title">KULAAI一站式大模型聚合平台</h1>
+                <p class="hero-subtitle">
+                    集成<span class="highlight-orange">ChatGPT</span>、<span class="highlight-orange">Gemini</span>、<span class="highlight-orange">Claude</span>等主流模型，
+                    长文本解析、办公创作、编程科研<span class="highlight-orange">全场景覆盖</span>
+                </p>
+                <button class="btn-orange-large" onclick="跳转官网()" style="padding:18px 50px;font-size:19px;letter-spacing:2px;">
+                    立即体验 →
+                </button>
+            </div>
+        </section>
+
+        <!-- 分割线1：动画延迟0.5s自动播放 -->
+        <div style="background:#0F3460;padding:28px 0;text-align:center;">
+            <div class="section-divider auto" style="animation-delay:0.5s;"></div>
+        </div>
+
+        <!-- ==================== 3. 三大功能卡片 ==================== -->
+        <section style="background:#0F3460;padding:40px 24px 50px;">
+            <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+
+                <!-- 卡片1：动画延迟0.25s -->
+                <div class="feature-card loaded" style="animation-delay:0.25s;" onclick="跳转官网()" title="点击了解详情">
+                    <div class="feature-card-body">
+                        <div class="feature-icon-wrap">🔄</div>
+                        <h3 class="feature-card-title">多模型一键切换</h3>
+                        <p class="feature-card-desc">无需注册多个AI网站，统一窗口调用各类旗舰大模型</p>
+                    </div>
+                </div>
+
+                <!-- 卡片2：动画延迟0.35s -->
+                <div class="feature-card loaded" style="animation-delay:0.35s;" onclick="跳转官网()" title="点击了解详情">
+                    <div class="feature-card-body">
+                        <div class="feature-icon-wrap">📄</div>
+                        <h3 class="feature-card-title">超强长文本能力</h3>
+                        <p class="feature-card-desc">万字论文、行业报告、合同文稿一键总结改写</p>
+                    </div>
+                </div>
+
+                <!-- 卡片3：动画延迟0.45s -->
+                <div class="feature-card loaded" style="animation-delay:0.45s;" onclick="跳转官网()" title="点击了解详情">
+                    <div class="feature-card-body">
+                        <div class="feature-icon-wrap">⚡</div>
+                        <h3 class="feature-card-title">全场景生产力工具</h3>
+                        <p class="feature-card-desc">办公/自媒体/程序员/研究生专属AI提效方案</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 分割线2：动画延迟0.6s -->
+        <div style="background:#0F3460;padding:28px 0;text-align:center;">
+            <div class="section-divider auto" style="animation-delay:0.6s;"></div>
+        </div>
+
+        <!-- ==================== 4. 痛点介绍区 ==================== -->
+        <section class="pain-points-section">
+            <div class="pain-points-content">
+                告别<span class="highlight-orange">多平台来回切换</span>、
+                频繁<span class="highlight-orange">复制粘贴</span>、
+                不同模型<span class="highlight-orange">账号重复登录</span>，
+                一个<span class="highlight-orange">KULAAI</span>搞定全部AI需求。
+            </div>
+        </section>
+
+        <!-- ==================== 5. 底部转化区 ==================== -->
+        <section class="cta-section">
+            <div class="cta-content">
+                <p class="cta-text">🚀 准备好提升效率了吗？立即开启AI之旅</p>
+                <button class="btn-orange-large" onclick="跳转官网()" style="padding:18px 50px;font-size:19px;letter-spacing:2px;">
+                    免费开始使用 →
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 6. 页脚 ==================== -->
+        <footer class="footer">
+            <p class="footer-text">
+                © 2026 <span style="color:#FF7D00;font-weight:700;">KULAAI</span> 聚合AI平台 ·
+                版权所有 ·
+                官网地址：<a class="footer-link" href="https://k.877ai.cn" target="_blank" rel="noopener">k.877ai.cn</a>
+            </p>
+        </footer>
+
+    </div>
+
+    <!-- ==================== JS交互区 ==================== -->
+    <script>
+        // 核心跳转函数
+        function 跳转官网() {
+            window.open('https://k.877ai.cn', '_blank', 'noopener,noreferrer');
+        }
+
+        // 轻微滚动视差效果
+        var 主视觉元素 = document.getElementById('heroSection');
+        var 视差ticking = false;
+        window.addEventListener('scroll', function() {
+            if (!视差ticking) {
+                window.requestAnimationFrame(function() {
+                    if (主视觉元素) {
+                        var 滚动位置 = window.pageYOffset || document.documentElement.scrollTop;
+                        var 位移量 = Math.min(滚动位置 * 0.15, 80);
+                        主视觉元素.style.backgroundPositionY = 位移量 + 'px';
+                    }
+                    视差ticking = false;
+                });
+                视差ticking = true;
+            }
+        });
+
+        console.log('%c🚀 KULAAI 聚合AI平台 %c前置导航页已就绪', 'color:#FF7D00;font-size:16px;', 'color:#0F3460;font-size:13px;');
+        console.log('%c💡 点击任意橙色按钮即可访问官网：k.877ai.cn', 'color:#8899bb;font-size:12px;');
+    </script>
+
+    <!--
+        ==================== 🎨 小白使用教程 ====================
+        ✅ 动画已改为纯CSS自动播放，打开页面即显示，无空白深蓝区域。
+        📌 主色修改：搜索 #0F3460 (深海蓝) 或 #FF7D00 (亮橙色) 即可批量替换。
+        📌 动画速度调整：搜索关键词“animation-delay”或“animation:”修改秒数。
+        📌 按钮大小：搜索 .btn-orange-large 修改 padding 值。
+        📌 分割线宽度：搜索 .section-divider 修改 width 值。
+    -->
+</body>
+</html>
